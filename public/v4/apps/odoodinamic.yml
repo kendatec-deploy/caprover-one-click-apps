@@ -1,0 +1,58 @@
+captainVersion: 4
+services:
+  postgres-$$cap_postgres_version:
+    image: postgres:$$cap_postgres_version
+    volumes:
+      - /caproverodoo/postgres-$$cap_postgres_version:/var/lib/postgresql/data
+    restart: always
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: shared_password
+      POSTGRES_DB: postgres
+    caproverExtra:
+      notExposeAsWebApp: 'true'
+
+  $$cap_appname:
+    image: odoo:$$cap_odoo_version
+    depends_on:
+      - postgres-$$cap_postgres_version
+    ports:
+      - "$$cap_dynamic_port:8069"
+    volumes:
+      - /caproverodoo/$$cap_appname/web-data:/var/lib/odoo
+      - /caproverodoo/$$cap_appname/config:/etc/odoo
+      - /caproverodoo/$$cap_appname/addons:/mnt/extra-addons  # Ruta amigable para módulos personalizados
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: shared_password
+      HOST: postgres-$$cap_postgres_version
+    caproverExtra:
+      containerHttpPort: '8069'
+
+caproverOneClickApp:
+  displayName: 'Odoo'
+  variables:
+    - id: $$cap_postgres_version
+      label: Postgres Version
+      defaultValue: '13'
+      description: "Check out their docker page for valid tags https://hub.docker.com/r/library/postgres/tags/"
+      validRegex: /^([^\s^\/])+$/ 
+
+    - id: $$cap_odoo_version
+      label: Odoo Version
+      defaultValue: '16.0'
+      description: "Check out their docker page for valid tags https://hub.docker.com/_/odoo?tab=tags"
+      validRegex: /^([^\s^\/])+$/ 
+
+    - id: $$cap_dynamic_port
+      label: Odoo Port
+      defaultValue: '8069'
+      description: "Specify the starting port. This will auto-increment if already in use."
+      validRegex: /^[0-9]+$/
+
+  instructions:
+    start: "Odoo is being deployed. Please wait a few minutes."
+    end: "Odoo is deployed and available at http://$$cap_appname.$$cap_root_domain:$$cap_dynamic_port."
+  isOfficial: true
+  description: "Odoo, formerly known as OpenERP, is a suite of open-source business apps written in Python and released under the AGPL license."
+  documentation: "https://hub.docker.com/_/odoo?tab=description"
